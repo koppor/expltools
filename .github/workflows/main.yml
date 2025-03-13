@@ -112,6 +112,7 @@ jobs:
         uses: zauguin/install-texlive@v4
         with:
           packages: |
+            scheme-basic
             l3build
             luatex
           texlive_version: ${{ matrix.release }}
