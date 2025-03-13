@@ -17,12 +17,12 @@ jobs:
         with:
           submodules: true
       - name: Install additional packages
-        run: |
-          set -e
-          sudo apt -qy update
-          sudo apt -qy install --no-install-recommends lua-check
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: lua-check
+          version: 1.0
       - name: Install TeX Live
-        uses: teatimeguest/setup-texlive-action@v3
+        uses: zauguin/install-texlive@v4
         with:
           packages: |
             l3build
@@ -43,7 +43,7 @@ jobs:
         with:
           submodules: true
       - name: Install TeX Live
-        uses: teatimeguest/setup-texlive-action@v3
+        uses: zauguin/install-texlive@v4
         with:
           packages: |
             l3build
@@ -75,7 +75,7 @@ jobs:
         with:
           submodules: true
       - name: Install TeX Live
-        uses: teatimeguest/setup-texlive-action@v3
+        uses: zauguin/install-texlive@v4
         with:
           packages: |
             l3build
@@ -91,30 +91,31 @@ jobs:
       fail-fast: false
       matrix:
         release:
-          - TL2013
-          - TL2014
-          - TL2015
-          - TL2016
-          - TL2017
-          - TL2018
-          - TL2019
-          - TL2020
-          - TL2021
-          - TL2022
-          - TL2023
-    container:
-      image: texlive/texlive:${{ matrix.release }}-historic
+          - 2013
+          - 2014
+          - 2015
+          - 2016
+          - 2017
+          - 2018
+          - 2019
+          - 2020
+          - 2021
+          - 2022
+          - 2023
+          - 2024
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: true
       - name: Install TeX Live
-        uses: teatimeguest/setup-texlive-action@v3
+        uses: zauguin/install-texlive@v4
         with:
           packages: |
+            scheme-basic
             l3build
             luatex
+          texlive_version: ${{ matrix.release }}
       - name: Install file "l3obsolete.txt"
         run: tlmgr install --reinstall --with-doc l3kernel
       - name: Generate file "explcheck-obsolete.lua"
@@ -124,7 +125,7 @@ jobs:
           set -e
           # Collect the full list of issues.
           export LUAINPUTS=explcheck/src
-          find /usr/local/texlive/ -type f -iregex '.*\.\(tex\|cls\|opt\|sty\)$' -exec \
+          find ~/texlive/ -type f -iregex '.*\.\(tex\|cls\|opt\|sty\)$' -exec \
             sh -c '
               texlua explcheck/src/explcheck.lua --porcelain --error-format="%f %t%n" -- "$@" || true
             ' sh {} + > issues-full.txt
@@ -154,11 +155,11 @@ jobs:
       - name: Upload issues
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.release }} issues
+          name: TL${{ matrix.release }} issues
           path: |
             issues.txt
       - name: Compare issues
-        run: diff explcheck/testfiles/${{ matrix.release }}-issues.txt issues.txt
+        run: diff explcheck/testfiles/TL${{ matrix.release }}-issues.txt issues.txt
   artifacts:
     name: Build and publish artifacts
     needs: [luacheck, explcheck, shellcheck, unit-tests, regression-tests]
@@ -169,18 +170,17 @@ jobs:
         with:
           submodules: true
       - name: Install additional packages
-        run: |
-          set -e
-          sudo apt -qy update
-          sudo apt -qy install --no-install-recommends parallel
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: parallel
+          version: 1.0
       - name: Install TeX Live
-        uses: teatimeguest/setup-texlive-action@v3
+        uses: zauguin/install-texlive@v4
         with:
           packages: |
             scheme-basic
             l3build
-          package-file: |
-            **/DEPENDS.txt
+          package_file: explcheck/support/DEPENDS.txt
       - name: Install file "l3obsolete.txt"
         run: tlmgr install --reinstall --with-doc l3kernel
       - name: Build CTAN archive and documentation
@@ -212,7 +212,7 @@ jobs:
         with:
           submodules: true
       - name: Install TeX Live
-        uses: teatimeguest/setup-texlive-action@v3
+        uses: zauguin/install-texlive@v4
         with:
           packages: |
             l3build
